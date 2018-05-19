@@ -10,9 +10,9 @@ namespace elFinder.NetCore.Web.Controllers
     public class FileSystemController : Controller
     {
         [Route("connector")]
-        public async Task<IActionResult> Connector()
+        public async Task<IActionResult> Connector(string folderPath = "", string folderName = "Files")
         {
-            var connector = GetConnector();
+            var connector = GetConnector(folderPath, folderName);
             return await connector.Process(Request);
         }
 
@@ -23,21 +23,21 @@ namespace elFinder.NetCore.Web.Controllers
             return await connector.GetThumbnail(HttpContext.Request, HttpContext.Response, hash);
         }
 
-        private Connector GetConnector()
+        private Connector GetConnector(string folderPath = "", string folderName = "Files")
         {
             var driver = new FileSystemDriver();
 
             string absoluteUrl = UriHelper.BuildAbsolute(Request.Scheme, Request.Host);
             var uri = new Uri(absoluteUrl);
-
+            folderPath = folderPath != "" ? ("/" + folderPath) : "";
             var root = new RootVolume(
-                Startup.MapPath("~/Files"),
-                $"http://{uri.Authority}/Files/",
+                Startup.MapPath($"~/Files{folderPath}"),
+                $"http://{uri.Authority}/Files/{folderPath}",
                 $"http://{uri.Authority}/el-finder/file-system/thumb/")
             {
                 //IsReadOnly = !User.IsInRole("Administrators")
                 IsReadOnly = false, // Can be readonly according to user's membership permission
-                Alias = "Files", // Beautiful name given to the root/home folder
+                Alias = folderName, // Beautiful name given to the root/home folder
                 MaxUploadSizeInKb = 500, // Limit imposed to user uploaded file <= 500 KB
                 //LockedFolders = new List<string>(new string[] { "Folder1" })
             };
